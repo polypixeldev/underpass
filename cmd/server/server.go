@@ -42,6 +42,24 @@ func main() {
 
 	r.Handle("/", http.RedirectHandler("https://github.com/cjdenio/underpass", http.StatusTemporaryRedirect)).Host(*host)
 
+	r.HandleFunc("/ok", func(rw http.ResponseWriter, r *http.Request) {
+		domain := r.URL.Query().Get("domain")
+		if domain == "" {
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Write([]byte("domain query parameter is required"))
+			return
+		}
+
+		subdomain := strings.Split(domain, ".")[0]
+		if _, ok := tunnels[subdomain]; ok {
+			rw.WriteHeader(http.StatusOK)
+			rw.Write([]byte("ok"))
+		} else {
+			rw.WriteHeader(http.StatusNotFound)
+			rw.Write([]byte("not found"))
+		}
+	}).Host(*host)
+
 	r.HandleFunc("/start", func(rw http.ResponseWriter, r *http.Request) {
 		subdomain := r.URL.Query().Get("subdomain")
 		if subdomain == "" {
